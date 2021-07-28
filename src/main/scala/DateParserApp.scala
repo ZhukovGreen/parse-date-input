@@ -21,6 +21,8 @@ class DateParserApp(log_level: LogLevel = LogLevel.INFO) extends LogSupport {
    *
    * @param fmt  i.e. "dd-MM-yyyy"
    * @param date i.e. "20-12-2020"
+   * @throws DateTimeParseException   if can't parse the date with the given fmt
+   * @throws IllegalArgumentException if bad fmt
    * */
   def parse_date(fmt: String, date: String): LocalDate = {
     try {
