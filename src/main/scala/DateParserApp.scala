@@ -43,11 +43,10 @@ class DateParserApp(log_level: LogLevel = LogLevel.INFO) extends LogSupport {
    * @throws IllegalArgumentException if string can't be parsed for all known formats
    * */
   def guess_date(date: String): LocalDate = {
-    val maybe_result = DateParserApp.POSSIBLE_DATA_FMTS.view.map(fmt => Try(parse_date(fmt, date))).find(_.isSuccess).map(_.get)
-    if (maybe_result.isEmpty) {
-      throw new IllegalArgumentException(s"Can't parse the $date with the available formats: $DateParserApp.POSSIBLE_DATA_FMTS")
+    DateParserApp.POSSIBLE_DATA_FMTS.view.map(fmt => Try(parse_date(fmt, date))).find(_.isSuccess).map(_.get) match {
+      case Some(result) => result
+      case None => throw new IllegalArgumentException(s"Can't parse the $date with the available formats: $DateParserApp.POSSIBLE_DATA_FMTS")
     }
-    else maybe_result.get
   }
 }
 
