@@ -1,7 +1,7 @@
 import wvlet.log.{LogLevel, LogSupport, Logger}
 
-import java.text.{ParseException, SimpleDateFormat}
-import java.util.Date
+import java.time.LocalDate
+import java.time.format.{DateTimeFormatter, DateTimeParseException}
 import scala.util.Try
 
 
@@ -16,25 +16,21 @@ class DateParserApp(log_level: LogLevel = LogLevel.INFO) extends LogSupport {
   Logger.setDefaultLogLevel(log_level)
   info(s"Logger set to ${Logger.getDefaultLogLevel} level")
 
-  // set some constants
-  val POSSIBLE_DATA_FMTS: List[String] = List("yyyy-MM-dd", "yyyy/MM/dd", "yyyy.MM.dd", "dd-MM-yyyy", "dd/MM/yyyy", "dd.MM.yyyy")
 
   /** Parse the date with the given format.
    *
    * @param fmt  i.e. "dd-MM-yyyy"
    * @param date i.e. "20-12-2020"
    * */
-  def parse_date(fmt: String, date: String): Date = {
+  def parse_date(fmt: String, date: String): LocalDate = {
     try {
-      val date_formatter = new SimpleDateFormat(fmt)
-      date_formatter.parse(date)
+      val date_formatter = DateTimeFormatter.ofPattern(fmt)
+      LocalDate.parse(date, date_formatter)
     } catch {
-      case e: ParseException =>
-        error(s"Can't parse $date for $fmt")
-        throw e
-      case e: IllegalArgumentException =>
-        error(s"Wrong format: $fmt")
-        throw e
+      case _: DateTimeParseException =>
+        throw new DateTimeParseException(s"Can't parse $date for $fmt", s"$fmt", 1)
+      case _: IllegalArgumentException =>
+        throw new IllegalArgumentException(s"Wrong format: $fmt")
     }
   }
 
@@ -46,12 +42,16 @@ class DateParserApp(log_level: LogLevel = LogLevel.INFO) extends LogSupport {
    * @return first element
    * @throws IllegalArgumentException if string can't be parsed for all known formats
    * */
-  def guess_date(date: String): Date = {
-    val maybe_result = POSSIBLE_DATA_FMTS.view.map(fmt => Try(parse_date(fmt, date))).find(_.isSuccess).map(_.get)
+  def guess_date(date: String): LocalDate = {
+    val maybe_result = DateParserApp.POSSIBLE_DATA_FMTS.view.map(fmt => Try(parse_date(fmt, date))).find(_.isSuccess).map(_.get)
     if (maybe_result.isEmpty) {
-      error(s"Can't parse the $date with the available formats: $POSSIBLE_DATA_FMTS")
-      throw new IllegalArgumentException
+      throw new IllegalArgumentException(s"Can't parse the $date with the available formats: $DateParserApp.POSSIBLE_DATA_FMTS")
     }
     else maybe_result.get
   }
+}
+
+object DateParserApp {
+  // set some constants
+  val POSSIBLE_DATA_FMTS: List[String] = List("yyyy-MM-dd", "yyyy/MM/dd", "yyyy.MM.dd", "dd-MM-yyyy", "dd/MM/yyyy", "dd.MM.yyyy")
 }
